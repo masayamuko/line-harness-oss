@@ -19,6 +19,7 @@ import {
 } from '@line-crm/db';
 import { buildIntroMessage } from '../services/intro-message.js';
 import type { Env } from '../index.js';
+import { applyEntryRouteAttribution } from '../services/entry-route-attribution.js';
 
 const liffRoutes = new Hono<Env>();
 
@@ -542,20 +543,15 @@ liffRoutes.get('/auth/callback', async (c) => {
     // Attribution tracking
     // xh: refs are X Harness one-time tokens (the token IS the secret) — never persist as ref_code
     if (ref && !ref.startsWith('xh:')) {
-      // Save ref_code on the friend record (first touch wins — only set if not already set)
-      await db
-        .prepare(`UPDATE friends SET ref_code = ? WHERE id = ? AND ref_code IS NULL`)
-        .bind(ref, friend.id)
-        .run();
-
-      // Look up entry route config
-      const route = await getEntryRouteByRefCode(db, ref);
+      // Apply attribution: ref_code first-touch save + tag add + tag_added scenario enroll + tag_change event fire
+      // (delegated to applyEntryRouteAttribution to keep all ref-entry paths consistent)
+      const attrResult = await applyEntryRouteAttribution(db, friend.id, ref);
 
       // Persist tracking event with ad click IDs
       await recordRefTracking(db, {
         refCode: ref,
         friendId: friend.id,
-        entryRouteId: route?.id ?? null,
+        entryRouteId: attrResult.routeId,
         sourceUrl: null,
         fbclid: fbclid || null,
         gclid: gclid || null,
@@ -567,15 +563,6 @@ liffRoutes.get('/auth/callback', async (c) => {
         userAgent: c.req.header('User-Agent') || null,
         ipAddress: c.req.header('CF-Connecting-IP') || null,
       });
-
-      if (route) {
-        // Auto-tag the friend
-        if (route.tag_id) {
-          await addTagToFriend(db, friend.id, route.tag_id);
-        }
-        // Auto-enroll in scenario (scenario_id stored; enrollment handled by scenario engine)
-        // Future: call enrollFriendInScenario(db, friend.id, route.scenario_id) here
-      }
     }
 
     // Save ad click IDs + UTM to friend metadata (for future ad API postback)
@@ -913,10 +900,9 @@ liffRoutes.post('/api/liff/link', async (c) => {
     await linkIgIgsid(c, friend.id, body.ig || '');
 
     if ((friend as unknown as Record<string, unknown>).user_id) {
-      // Still save ref even if already linked (but never persist xh: tokens as ref_code)
+      // Still apply attribution even if already linked (helper handles xh: filter internally)
       if (body.ref && !body.ref.startsWith('xh:')) {
-        await db.prepare('UPDATE friends SET ref_code = ? WHERE id = ? AND ref_code IS NULL')
-          .bind(body.ref, friend.id).run();
+        await applyEntryRouteAttribution(db, friend.id, body.ref);
       }
       // X Harness token resolution for already-linked friends
       if (body.ref && body.ref.startsWith('xh:')) {
@@ -965,19 +951,16 @@ liffRoutes.post('/api/liff/link', async (c) => {
 
     await linkFriendToUser(db, friend.id, userId);
 
-    // Save ref_code from LIFF (first touch wins)
-    // xh: refs are X Harness one-time tokens — never persist as ref_code
+    // Save ref_code from LIFF + apply attribution (first touch wins, helper handles consistency)
     if (body.ref && !body.ref.startsWith('xh:')) {
-      await db.prepare('UPDATE friends SET ref_code = ? WHERE id = ? AND ref_code IS NULL')
-        .bind(body.ref, friend.id).run();
+      const attrResult = await applyEntryRouteAttribution(db, friend.id, body.ref);
 
       // Record ref tracking
       try {
-        const route = await getEntryRouteByRefCode(db, body.ref);
         await recordRefTracking(db, {
           refCode: body.ref,
           friendId: friend.id,
-          entryRouteId: route?.id ?? null,
+          entryRouteId: attrResult.routeId,
           sourceUrl: null,
         });
       } catch { /* silent */ }
