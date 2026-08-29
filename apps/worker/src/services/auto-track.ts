@@ -1,4 +1,4 @@
-import { createTrackedLink } from '@line-crm/db';
+import { createTrackedLink, getAutoTrackedLinkByUrl } from '@line-crm/db';
 
 // Domains where Universal Links / App Links should be used
 const APP_LINK_DOMAINS = new Set([
@@ -53,10 +53,15 @@ async function createTrackingMap(
 ): Promise<Map<string, { trackingUrl: string; originalUrl: string; label: string }>> {
   const urlMap = new Map<string, { trackingUrl: string; originalUrl: string; label: string }>();
   for (const url of urls) {
-    const link = await createTrackedLink(db, {
-      name: `auto: ${url.slice(0, 60)}`,
-      originalUrl: url,
-    });
+    // Reuse an existing auto link for the same URL instead of inserting a new
+    // row per delivery attempt (prevents unbounded growth on retry loops and
+    // keeps click analytics aggregated per URL).
+    const link =
+      (await getAutoTrackedLinkByUrl(db, url)) ??
+      (await createTrackedLink(db, {
+        name: `auto: ${url.slice(0, 60)}`,
+        originalUrl: url,
+      }));
     // Use direct /t/ URL — Worker handles LINE app detection and LIFF redirect server-side
     const trackingUrl = `${workerUrl}/t/${link.id}`;
     const hostname = new URL(url).hostname.replace('www.', '');

@@ -43,6 +43,28 @@ export async function getTrackedLinkById(
     .first<TrackedLink>();
 }
 
+/**
+ * Find an existing auto-generated tracked link for a URL so it can be reused.
+ *
+ * Auto-tracking runs on every delivery attempt. Without reuse, a delivery that
+ * keeps failing and retrying (e.g. an expired LINE channel token) inserts a new
+ * row per attempt and the table grows unboundedly. One row per URL is also
+ * better for analytics: clicks aggregate instead of being split across rows.
+ */
+export async function getAutoTrackedLinkByUrl(
+  db: D1Database,
+  originalUrl: string,
+): Promise<TrackedLink | null> {
+  return db
+    .prepare(
+      `SELECT * FROM tracked_links
+       WHERE original_url = ? AND is_active = 1 AND name LIKE 'auto: %'
+       ORDER BY created_at ASC LIMIT 1`,
+    )
+    .bind(originalUrl)
+    .first<TrackedLink>();
+}
+
 export interface CreateTrackedLinkInput {
   name: string;
   originalUrl: string;
