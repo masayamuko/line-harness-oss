@@ -10,7 +10,7 @@
     "deploy": "pnpm build && wrangler pages deploy dist"
   },
   "dependencies": {
-    "@line/liff": "^2.24.0",
+    "@line/liff": "^2.31.2",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.0.0"
