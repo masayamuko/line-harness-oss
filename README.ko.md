@@ -1,23 +1,27 @@
 🌐 [日本語](README.md) | [English](README.en.md) | [简体中文](README.zh-CN.md) | **한국어** | [Español](README.es.md)
 
-# LINE Harness
+# L Harness
 
 > ### **[LINE에서 무료 체험하기](https://shudesu.github.io/line-harness-oss/)** 👈
 
 LINE 공식 계정의 완전 오픈소스 CRM. **유료 LINE CRM SaaS (월 1~2만 엔)의 무료 대체품**.
 Cloudflare 무료 플랜에서 동작. **서버 비용 0원**. Claude Code 에서 모든 조작 가능.
 
-### ▶️ [YouTube 에서 영상 보기 (약 20분)](https://youtu.be/DiRuGaeq1sM)
+### 한 줄을 복사해서 설치 시작
 
-[![클릭하여 YouTube 재생 — LINE Harness 도입 가이드](https://img.youtube.com/vi/DiRuGaeq1sM/maxresdefault.jpg)](https://youtu.be/DiRuGaeq1sM)
+Node.js 22 이상과 Git이 설치된 PC의 터미널에 아래 명령어를 붙여 넣고 실행하세요. 안내에 따라 Cloudflare 로그인과 LINE 설정을 진행하세요.
+
+```bash
+npx --yes create-line-harness@latest
+```
 
 **현재 버전**: v0.13.2 ・ MIT License ・ TypeScript / Cloudflare Workers + D1
 
 ---
 
-## 왜 LINE Harness?
+## 왜 L Harness?
 
-| | 폐쇄형 SaaS A | 폐쇄형 SaaS B | **LINE Harness** |
+| | 폐쇄형 SaaS A | 폐쇄형 SaaS B | **L Harness** |
 |---|---|---|---|
 | 월 요금 | ¥20,000+ | ¥10,000+ | **0 원** |
 | 스텝 메시지 | ✅ | ✅ | ✅ |
@@ -40,24 +44,24 @@ Cloudflare 무료 플랜에서 동작. **서버 비용 0원**. Claude Code 에�
 ### 명령어 한 줄로 전체 셋업
 
 ```bash
-npx create-line-harness
+npx --yes create-line-harness@latest
 ```
 
-CLI 가 다음을 모두 처리합니다:
+CLI 안내에 따라 다음 설정을 진행합니다:
 - Cloudflare 계정 인증 (`wrangler login`)
 - D1 데이터베이스 생성 + schema 및 migration 적용
 - Worker / 관리자 페이지 배포
 - LINE 공식 계정 credentials 등록
-- LIFF 앱 자동 생성
+- 안내에 따라 LINE Login 채널과 LIFF 앱을 직접 설정
 - 관리자 페이지 첫 로그인용 Owner 사용자 생성
 
-소요 시간 약 5 분. 완료되면 `https://<your-name>-admin.pages.dev` 에서 즉시 운영 시작.
+완료 화면의 안내에 따라 Webhook URL, LINE Login 콜백 URL, LIFF 엔드포인트를 설정한 뒤 표시된 관리 화면 URL을 여세요. 소요 시간은 계정 준비와 LINE 설정에 따라 달라집니다.
 
 ### 필요한 것
 
-- Cloudflare 계정 (무료 플랜으로 충분)
+- R2를 활성화한 Cloudflare 계정 (R2 활성화 시 결제 정보 등록 필요)
 - LINE 공식 계정 + Messaging API channel
-- Node.js 22+ / pnpm
+- Node.js 22 이상 (npm / npx 포함) 및 Git
 
 ---
 
@@ -83,6 +87,14 @@ CLI 가 다음을 모두 처리합니다:
 - **폼 (LIFF)** — LINE 내에서 완결되는 폼, 답변 → 메타데이터 자동 저장
 - **캘린더 예약** — Google Calendar 연동 LIFF 예약 시스템
 - **스태프 관리** — Owner / Admin / Staff 3단계 역할, 개별 API 키 발급
+
+### 제휴 추적 (ASP)
+- **셀프서브 링크 발급** — 제휴 파트너가 관리자 개입 없이 LIFF 추적 링크를 직접 발급
+- **캠페인 관리** — 캠페인별 고정 보수 설정, 여러 캠페인 병렬 운영
+- **시계열 추적** — 클릭 → 친구 추가 → CV를 순서대로 기록, last-touch 귀속으로 성과 연결
+- **승인 플로우** — 귀속된 성과를 승인/거절하여 보수를 확정, 중복 계정 플래그로 부정 의심 성과를 가시화
+- **LINE 푸시 알림** — 성과 확정 시 제휴 파트너에게 자동 푸시 알림
+- 상세: [docs/wiki/27-Affiliate-ASP.md](docs/wiki/27-Affiliate-ASP.md)
 
 ### 자동화
 - **IF-THEN 규칙** — 트리거 7종 × 액션 6종
@@ -135,7 +147,7 @@ CLI 가 다음을 모두 처리합니다:
 
 ## 리소스
 
-- [셋업 가이드 영상](https://youtu.be/DiRuGaeq1sM)
+- [명령어 복사로 설치 시작](#빠른-시작)
 - [LINE 에서 데모 체험](https://shudesu.github.io/line-harness-oss/)
 - [npm: @line-harness/sdk](https://www.npmjs.com/package/@line-harness/sdk)
 - [npm: @line-harness/mcp-server](https://www.npmjs.com/package/@line-harness/mcp-server)
@@ -155,4 +167,4 @@ Issue / PR 환영. `Shudesu/line-harness-oss` (이 저장소) 로 보내주세�
 
 ---
 
-> **LINE Harness** by [@Shudesu](https://github.com/Shudesu) — AI 네이티브 시대의 오픈소스 LINE CRM
+> **L Harness** by [@Shudesu](https://github.com/Shudesu) — AI 네이티브 시대의 오픈소스 LINE CRM
