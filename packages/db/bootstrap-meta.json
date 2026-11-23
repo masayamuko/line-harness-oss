@@ -80,7 +80,10 @@
     "072_health_logs_composite_index.sql",
     "073_x_line_first_gates.sql",
     "074_security_hardening.sql",
-    "075_ig_link_token_uses.sql"
+    "075_ig_link_token_uses.sql",
+    "076_api_idempotency_keys.sql",
+    "077_api_line_sends.sql",
+    "078_friend_scheduled_messages.sql"
   ],
-  "migrationCount": 81
+  "migrationCount": 84
 }
