@@ -120,6 +120,27 @@ CREATE TABLE IF NOT EXISTS affiliates (
   created_at      TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', '+9 hours'))
 );
 
+CREATE TABLE IF NOT EXISTS api_idempotency_keys (
+  scope           TEXT NOT NULL,
+  key             TEXT NOT NULL,
+  request_hash    TEXT NOT NULL,
+  claim_token     TEXT NOT NULL,
+  status          TEXT NOT NULL CHECK (status IN ('processing', 'completed')),
+  response_status INTEGER,
+  response_body   TEXT,
+  locked_until    INTEGER NOT NULL,
+  created_at      INTEGER NOT NULL,
+  PRIMARY KEY (scope, key)
+);
+
+CREATE TABLE IF NOT EXISTS api_line_sends (
+  id TEXT PRIMARY KEY,
+  request_body TEXT NOT NULL,
+  claim_token TEXT NOT NULL,
+  status TEXT NOT NULL CHECK (status IN ('sending', 'retryable', 'completed')),
+  first_started_at INTEGER NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS auth_audit_log (
   id TEXT PRIMARY KEY,
   actor_id TEXT NOT NULL,
@@ -485,6 +506,29 @@ CREATE TABLE IF NOT EXISTS "friend_scenarios" (
   started_at         TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', '+9 hours')),
   next_delivery_at   TEXT,
   updated_at         TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', '+9 hours'))
+);
+
+CREATE TABLE IF NOT EXISTS friend_scheduled_messages (
+  id               TEXT PRIMARY KEY,
+  friend_id        TEXT NOT NULL REFERENCES friends (id) ON DELETE CASCADE,
+  line_account_id  TEXT,
+  message_type     TEXT NOT NULL DEFAULT 'text',
+  content          TEXT NOT NULL,
+  alt_text         TEXT,
+  track_links      INTEGER NOT NULL DEFAULT 1,
+  send_at          INTEGER NOT NULL,
+  status           TEXT NOT NULL DEFAULT 'pending'
+                   CHECK (status IN ('pending', 'sending', 'sent', 'cancelled', 'failed')),
+  created_by       TEXT,
+  claim_token      TEXT,
+  claimed_at       INTEGER,
+  sent_at          TEXT,
+  cancelled_at     TEXT,
+  cancelled_by     TEXT,
+  error            TEXT,
+  message_id       TEXT,
+  created_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', '+9 hours')),
+  updated_at       TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%f', 'now', '+9 hours'))
 );
 
 CREATE TABLE IF NOT EXISTS friend_scores (
@@ -1341,6 +1385,12 @@ CREATE INDEX IF NOT EXISTS idx_friend_scenarios_next_delivery_at ON friend_scena
 CREATE INDEX IF NOT EXISTS idx_friend_scenarios_status ON friend_scenarios (status);
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_friend_scenarios_unique ON friend_scenarios (friend_id, scenario_id) WHERE status != 'completed';
+
+CREATE INDEX IF NOT EXISTS idx_friend_scheduled_messages_due
+  ON friend_scheduled_messages (status, send_at);
+
+CREATE INDEX IF NOT EXISTS idx_friend_scheduled_messages_friend
+  ON friend_scheduled_messages (friend_id, send_at);
 
 CREATE INDEX IF NOT EXISTS idx_friend_scores_created ON friend_scores (created_at);
 
